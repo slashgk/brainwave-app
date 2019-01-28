@@ -16,6 +16,7 @@ app.use(bodyPraser.json());
 
 app.post('/stocks', (req, res) => {
     console.log(req.body);
+    req.body.date = `ISO(${req.body.date})`;
     var stock = new Stock(req.body);
 
     stock.save().then((doc) => {
@@ -29,18 +30,27 @@ app.get('/stocks/',(req, res) => {
     var fromDate = req.query.fromDate;
     var toDate = req.query.toDate;
 
-    var fromDate = moment(fromDate, "DD-MM-YYYY");
-    console.log(fromDate);
+    if(fromDate&&toDate){
+        var fromDate = `ISO(${fromDate})`;
+        var toDate = `ISO(${toDate})`;
+        console.log(fromDate);
 
-    Stock.find({
-        date: fromDate,
-    }).then((stock) => {
-        if(!stock){
-            console.log('check'); 
-            return res.status(404).send();
-        }
-        res.send({stock});
-    }).catch((e) => res.status(400).send());
+        Stock.find({
+            date: {
+                $gte: fromDate,
+                $lt: toDate
+            }
+        }).then((stock) => {
+            if(!stock){
+                console.log('check'); 
+                return res.status(404).send();
+            }
+            res.send({stock});
+        }).catch((e) => res.status(400).send());
+    }
+    else{
+        res.status(400).send();
+    }
 });
 
 app.listen(port, () => {
